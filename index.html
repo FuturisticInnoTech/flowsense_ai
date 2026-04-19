@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowSense AI Command Center</title>
+    <meta name="description" content="AI assistant for event navigation.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="global-alert-banner" class="alert-banner hidden">
+        <span class="alert-icon">⚠️</span>
+        <span id="global-alert-text">System Alert</span>
+    </div>
+
+    <header class="navbar glass-panel">
+        <div class="logo">
+            <h1>FlowSense <span>AI</span></h1>
+        </div>
+        <div class="simulation-controls">
+            <span class="sim-label">Simulations:</span>
+            <button class="sim-btn" id="sim-rush">Match Ending</button>
+            <button class="sim-btn" id="sim-rain">Rain Delay</button>
+            <button class="sim-btn" id="sim-entry">Entry Spike</button>
+            <button class="sim-btn outline" id="sim-reset">Reset Data</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Dashboard Section -->
+        <section class="dashboard">
+            <header class="section-header">
+                <h2>Live Heatmap Grid <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted); margin-left: 10px;">(Click zone for details)</span></h2>
+                <div class="legend" id="heatmap-legend">
+                    <span class="dot low"></span> Optimal
+                    <span class="dot medium"></span> Moderate
+                    <span class="dot high"></span> Congested
+                </div>
+            </header>
+            
+            <div class="virtual-map-wrapper">
+                <div class="virtual-map-container" id="virtual-map">
+                    <!-- Map nodes and user beacon injected here -->
+                </div>
+            </div>
+
+            <div class="zones-grid" id="zones-container">
+                <!-- Zones rendered here -->
+            </div>
+        </section>
+
+        <!-- AI Command Panel -->
+        <aside class="ai-panel glass-panel" style="display: flex; flex-direction: column;">
+            <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; height: 100%; border: none; padding: 0;">
+                <h3 style="margin-bottom: 1.5rem; letter-spacing: 2px; color: var(--accent-blue);">SYSTEM INSIGHTS</h3>
+                <div id="ai-recommendation-content" class="recommendation-content" style="flex: 1; overflow-y: auto;">
+                    Loading insights...
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- FlowSense AI Bot Widget -->
+    <div class="floating-controls">
+        <button id="btn-optimize" class="floating-optimize-btn">✨ Optimize Move</button>
+        <button class="chat-fab" id="chat-fab">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+    </div>
+    
+    <div class="chat-widget-container hidden" id="chat-widget">
+        <div class="chat-widget-header">
+            <h3>FlowSense AI Bot</h3>
+            <button id="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-window" id="chat-window">
+            <div class="message ai">FlowSense AI active. How can I assist you?</div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Ask for directions or info..." autocomplete="off">
+            <button id="send-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Zone Details Modal -->
+    <div id="zone-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" id="modal-content">
+            <button class="close-btn" id="close-modal-btn">&times;</button>
+            <div class="modal-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem; flex-wrap:wrap; gap:1rem;">
+                    <h2 id="modal-title" style="margin:0">Zone Name</h2>
+                    <button id="set-location-btn" class="set-location-btn">📍 Set As My Location</button>
+                </div>
+                <div id="modal-badges" class="zone-badges"></div>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <div class="modal-panel">
+                        <h3>Current Status</h3>
+                        <div id="modal-current-stats"></div>
+                    </div>
+                    <div class="modal-panel">
+                        <h3>Expected Future</h3>
+                        <div id="modal-future-stats" class="predictive-timeline large"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-chart-panel">
+                    <h3>Historical Trend</h3>
+                    <div class="canvas-wrapper">
+                        <canvas id="zoneChart" width="600" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
