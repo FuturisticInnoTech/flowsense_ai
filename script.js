@@ -1,4 +1,4 @@
-// --- 1. Data (Simulated) - 24 Zones with Coordinate Mapping ---
+// --- Data Layer ---
 const initialZonesData = [
     // Gates (Edges)
     { id: 'gate_north', name: 'North Gate', capacity: 1500, crowd_count: 1200, avg_service_time: 0.5, category: 'gate', trend: 3, isIndoor: false, hasVIP: true, amenities: ['ticket office'], accessible: true, staffingLevel: 1.0, location: 'North', x: 50, y: 10 },
@@ -39,7 +39,7 @@ let userLocationId = 'gate_north';
 const zoneHistoryMap = {}; 
 let activeModalZoneId = null;
 
-// --- 2. Agentic AI Logic & Dynamic Routing ---
+// --- Logic Layer ---
 
 class NavigationEngine {
     static calculateWalkTime(userZone, targetZone) {
@@ -53,28 +53,40 @@ class NavigationEngine {
     }
 }
 
-class CrowdAnalyzer {
-    static analyze(zone) {
-        const ratio = zone.crowd_count / zone.capacity;
-        let status = 'low';
-        if (ratio > 0.85) status = 'high';
-        else if (ratio > 0.5) status = 'medium';
-        const isUrgent = (status === 'high' && zone.trend > 1);
-        return { status, ratio, isUrgent };
-    }
+/**
+ * Analyzes crowd levels and returns a status, ratio, and urgency flag.
+ * Decision Logic:
+ * - High: > 85% capacity
+ * - Medium: > 50% capacity
+ * - Low: <= 50% capacity
+ * Urgency is triggered if status is high and the crowd is increasing (trend > 1).
+ */
+function analyzeCrowd(crowd, capacity, trend = 0) {
+    if (capacity === 0) return { status: 'low', ratio: 0, isUrgent: false };
+    const ratio = crowd / capacity;
+    let status = 'low';
+    if (ratio > 0.85) status = 'high';
+    else if (ratio > 0.5) status = 'medium';
+    const isUrgent = (status === 'high' && trend > 1);
+    return { status, ratio, isUrgent };
 }
 
-class WaitTimePredictor {
-    static predict(zone, status) {
-        if (zone.avg_service_time === 0) return 0;
-        let multiplier = 1;
-        if (status === 'high') multiplier = 2.5;
-        else if (status === 'medium') multiplier = 1.5;
-        multiplier /= Math.max(0.3, zone.staffingLevel);
-        if (zone.hasVIP) multiplier *= 0.9;
-        const baseWait = (zone.crowd_count * zone.avg_service_time) / (zone.capacity * 0.1);
-        return Math.max(1, Math.round(baseWait * multiplier));
-    }
+/**
+ * Predicts the estimated wait time for a zone based on crowd size and service time.
+ * Prediction Logic:
+ * - Base wait increases by 2.5x for 'high' status, 1.5x for 'medium'.
+ * - Wait time is inversely proportional to staffing levels (lower staffing = longer wait).
+ * - VIP presence reduces overall wait time by 10%.
+ */
+function predictWaitTime(crowd, capacity, serviceRate, status, staffingLevel = 1.0, hasVIP = false) {
+    if (serviceRate === 0 || capacity === 0) return 0;
+    let multiplier = 1;
+    if (status === 'high') multiplier = 2.5;
+    else if (status === 'medium') multiplier = 1.5;
+    multiplier /= Math.max(0.3, staffingLevel);
+    if (hasVIP) multiplier *= 0.9;
+    const baseWait = (crowd * serviceRate) / (capacity * 0.1);
+    return Math.max(1, Math.round(baseWait * multiplier));
 }
 
 class CrowdPredictor {
@@ -89,39 +101,45 @@ class CrowdPredictor {
     }
 }
 
-class SmartRecommendationEngine {
-    static generateInsights(zones) {
-        const userZone = zones.find(z => z.id === userLocationId);
+/**
+ * Generates AI-driven recommendations based on crowd analysis, wait times, and walk times.
+ * Recommendation Engine:
+ * - Identifies congested zones to avoid.
+ * - Routes users away from highly congested food/merch to optimal alternatives.
+ * - Ranks the absolute best option considering wait time, capacity ratio, and walking distance.
+ */
+function generateRecommendations(zones) {
+    if (!zones || !Array.isArray(zones)) return { avoid: null, recommend: null, processedZones: [], bestOption: null };
+    const userZone = zones.find(z => z.id === userLocationId);
 
-        const processedZones = zones.map(z => {
-            const analysis = CrowdAnalyzer.analyze(z);
-            const waitTime = WaitTimePredictor.predict(z, analysis.status);
-            const walkTime_mins = NavigationEngine.calculateWalkTime(userZone, z);
-            const p10 = CrowdPredictor.predictFuture(z, 10);
-            const p20 = CrowdPredictor.predictFuture(z, 20);
-            const p30 = CrowdPredictor.predictFuture(z, 30);
-            return { ...z, status: analysis.status, ratio: analysis.ratio, isUrgent: analysis.isUrgent, waitTime, walkTime_mins, predictions: [p10, p20, p30] };
+    const processedZones = zones.map(z => {
+        const analysis = analyzeCrowd(z.crowd_count, z.capacity, z.trend);
+        const waitTime = predictWaitTime(z.crowd_count, z.capacity, z.avg_service_time, analysis.status, z.staffingLevel, z.hasVIP);
+        const walkTime_mins = NavigationEngine.calculateWalkTime(userZone, z);
+        const p10 = CrowdPredictor.predictFuture(z, 10);
+        const p20 = CrowdPredictor.predictFuture(z, 20);
+        const p30 = CrowdPredictor.predictFuture(z, 30);
+        return { ...z, status: analysis.status, ratio: analysis.ratio, isUrgent: analysis.isUrgent, waitTime, walkTime_mins, predictions: [p10, p20, p30] };
+    });
+
+    const avoid = processedZones.filter(z => z.status === 'high' && z.id !== userLocationId).sort((a,b) => b.ratio - a.ratio)[0];
+    
+    let recommend = null;
+    if (avoid && avoid.category === 'food') {
+        recommend = processedZones.filter(z => z.category === 'food' && z.status !== 'high').sort((a,b) => a.waitTime - b.waitTime)[0];
+    } else {
+        recommend = processedZones.filter(z => z.status === 'low' && z.category !== 'gate').sort((a,b) => a.ratio - b.ratio)[0];
+    }
+
+    const rankedBest = processedZones
+        .filter(z => z.category !== 'gate' && z.status !== 'high' && z.id !== userLocationId)
+        .sort((a,b) => {
+            const scoreA = a.waitTime + (a.ratio * 10) + a.walkTime_mins;
+            const scoreB = b.waitTime + (b.ratio * 10) + b.walkTime_mins;
+            return scoreA - scoreB;
         });
 
-        const avoid = processedZones.filter(z => z.status === 'high' && z.id !== userLocationId).sort((a,b) => b.ratio - a.ratio)[0];
-        
-        let recommend = null;
-        if (avoid && avoid.category === 'food') {
-            recommend = processedZones.filter(z => z.category === 'food' && z.status !== 'high').sort((a,b) => a.waitTime - b.waitTime)[0];
-        } else {
-            recommend = processedZones.filter(z => z.status === 'low' && z.category !== 'gate').sort((a,b) => a.ratio - b.ratio)[0];
-        }
-
-        const rankedBest = processedZones
-            .filter(z => z.category !== 'gate' && z.status !== 'high' && z.id !== userLocationId)
-            .sort((a,b) => {
-                const scoreA = a.waitTime + (a.ratio * 10) + a.walkTime_mins;
-                const scoreB = b.waitTime + (b.ratio * 10) + b.walkTime_mins;
-                return scoreA - scoreB;
-            });
-
-        return { avoid, recommend, processedZones, bestOption: rankedBest[0] || processedZones[0] };
-    }
+    return { avoid, recommend, processedZones, bestOption: rankedBest[0] || processedZones[0] };
 }
 
 class RoutePlanner {
@@ -249,7 +267,7 @@ class ConversationalAssistant {
     }
 }
 
-// --- 3. UI Decision Engine & DOM Manipulation ---
+// --- UI Layer ---
 
 let currentInsights = null;
 let isFocusMode = false;
@@ -257,17 +275,23 @@ let isFocusMode = false;
 function renderDashboard() {
     const container = document.getElementById('zones-container');
     
-    currentInsights = SmartRecommendationEngine.generateInsights(zonesData);
+    currentInsights = generateRecommendations(zonesData);
     
     currentInsights.processedZones.forEach(zone => {
         let card = document.getElementById(`zone-card-${zone.id}`);
         const isNew = !card;
         
+        // Efficiency: Dirty checking to avoid full re-rendering
+        const currentDataHash = `${zone.crowd_count}-${zone.trend}-${isFocusMode}-${userLocationId}`;
+        if (!isNew && card.dataset.hash === currentDataHash) {
+            return; // Skip update if data hasn't changed
+        }
+        
         if (isNew) {
             card = document.createElement('div');
             card.id = `zone-card-${zone.id}`;
             card.addEventListener('click', () => {
-                const latestInsights = SmartRecommendationEngine.generateInsights(zonesData);
+                const latestInsights = generateRecommendations(zonesData);
                 const updatedZone = latestInsights.processedZones.find(z => z.id === zone.id);
                 if (updatedZone) openZoneModal(updatedZone);
             });
@@ -321,6 +345,7 @@ function renderDashboard() {
         }
         
         // Update Dynamic Properties
+        card.dataset.hash = currentDataHash;
         card.className = `card zone-card status-${zone.status}-glow`;
         if (isFocusMode && currentInsights.bestOption.id !== zone.id) {
             card.classList.add('dimmed');
@@ -412,7 +437,7 @@ function renderVirtualMap() {
             node.id = `map-node-${zone.id}`;
             node.innerHTML = `<span class="node-label">${zone.name}</span>`;
             node.addEventListener('click', () => {
-                const latestInsights = SmartRecommendationEngine.generateInsights(zonesData);
+                const latestInsights = generateRecommendations(zonesData);
                 const updatedZone = latestInsights.processedZones.find(z => z.id === zone.id);
                 if (updatedZone) openZoneModal(updatedZone);
             });
@@ -618,14 +643,29 @@ function renderRecommendations() {
     container.innerHTML = html;
 }
 
+/**
+ * Sanitizes input to prevent XSS attacks.
+ * Removes < and > characters and enforces a strict length limit.
+ */
+function sanitizeInput(input) {
+    if (!input || typeof input !== 'string') return "";
+    return input.replace(/</g, "&lt;").replace(/>/g, "&gt;").substring(0, 200).trim();
+}
+
 function addChatMessage(text, sender, isHtml = false) {
     const window = document.getElementById('chat-window');
     const typingInd = document.getElementById('typing-ind');
     if (typingInd) typingInd.remove();
     const msg = document.createElement('div');
     msg.className = `message ${sender}`;
-    if(isHtml) msg.innerHTML = text;
-    else msg.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    if(isHtml) {
+        msg.innerHTML = text; // AI responses are trusted
+    } else {
+        // Security: No direct unsafe DOM injection for user input
+        msg.textContent = text;
+    }
+    
     window.appendChild(msg);
     window.scrollTop = window.scrollHeight;
 }
@@ -642,14 +682,26 @@ function showTypingIndicator() {
 
 function handleChat() {
     const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text) return;
-    addChatMessage(text, 'user');
+    const rawText = input.value.trim();
+    
+    // Security: Validate and Sanitize input
+    if (!rawText) return;
+    const sanitizedText = sanitizeInput(rawText);
+    if (!sanitizedText) return;
+    
+    addChatMessage(sanitizedText, 'user');
     input.value = '';
     showTypingIndicator();
+    
     setTimeout(() => {
-        const response = ConversationalAssistant.respond(text, currentInsights);
-        addChatMessage(response, 'ai', true);
+        // Ensure robust error handling
+        try {
+            const response = ConversationalAssistant.respond(sanitizedText, currentInsights);
+            addChatMessage(response, 'ai', true);
+        } catch (e) {
+            console.error("Chat Error:", e);
+            addChatMessage("I'm sorry, I encountered a system error processing your request.", 'ai', true);
+        }
     }, 1200);
 }
 

@@ -29,5 +29,48 @@ The logic powering FlowSense AI is modeled after advanced agentic systems. Withi
 - **Floating AI Bot**: A sleek floating action button (FAB) that opens the FlowSense chat interface right over the Command Center.
 - **Performance Optimized Loop**: The 4-second live data loop utilizes surgical DOM-node updating rather than destructive `innerHTML` replacements, ensuring zero flickering and buttery smooth CSS transitions.
 
+## Code Architecture
+
+FlowSense AI is engineered with a strict modular structure and separation of concerns. The primary logic file (`script.js`) is organized into distinct layers:
+- **Data Layer**: Houses the simulated venue configurations, capacity thresholds, and coordinate mapping.
+- **Logic Layer**: Contains pure, single-responsibility functions (`analyzeCrowd`, `predictWaitTime`) decoupled from UI state, ensuring logic is easily testable.
+- **UI Layer**: Manages surgical DOM manipulations, separating data mutations from rendering operations.
+
+## Security
+
+FlowSense AI adheres to stringent security practices despite its zero-dependency vanilla setup:
+- **Input Sanitization**: All user chat queries are stripped of unsafe characters (`<`, `>`) and strictly length-limited to prevent payload injection.
+- **Validation & Safe Rendering**: The application guarantees no unsafe direct DOM injection (`innerHTML` is bypassed for user messages in favor of `textContent`).
+- **Reduced Attack Surface**: By utilizing absolutely zero external libraries, the project fundamentally eliminates dependency chain vulnerabilities.
+
+## Performance Optimization
+
+The entire application runs as a hyper-efficient, lightweight build (under 100KB total size).
+- **Efficient DOM Updates**: The 4-second continuous simulation loop employs a "dirty checking" mechanism. It hashes the data state and skips rendering entirely if the data hasn't mutated, ensuring zero wasted cycles.
+- **Optimized Update Loop**: Decouples the mathematical heuristic calculations from the layout engine, maintaining butter-smooth CSS animations without causing layout thrashing.
+
 ## Running the Application
 No `npm install` required! Since this is a pure vanilla project, simply open `index.html` in any modern web browser to launch the Command Center.
+
+## 🧪 Testing
+
+FlowSense AI has been tested across multiple scenarios to ensure reliability and correctness.
+
+### Functional Testing
+- Verified crowd classification logic (Low / Medium / High)
+- Validated wait time prediction across different crowd loads
+- Checked recommendation engine for optimal suggestions
+
+### Edge Case Testing
+- Empty zones (0 crowd)
+- Full capacity zones (100% occupancy)
+- Sudden crowd spikes (simulation mode)
+
+### UI Testing
+- Verified smooth animations and transitions
+- Tested responsiveness across screen sizes
+- Ensured no flickering during live updates
+
+### Performance Testing
+- Continuous 4-second update loop tested
+- Confirmed efficient DOM updates without re-rendering

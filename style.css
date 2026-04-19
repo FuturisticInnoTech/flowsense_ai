@@ -975,6 +975,88 @@ canvas#zoneChart {
     box-shadow: 0 0 15px var(--accent-blue);
 }
 
+/* Focus Accessibility */
+*:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* System Diagnostics Panel */
+.diagnostics-panel {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--status-med);
+    transition: all 0.3s ease;
+}
+
+.diagnostics-panel.all-passed {
+    border-left-color: var(--status-low);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+.diagnostics-panel.has-failures {
+    border-left-color: var(--status-high);
+    box-shadow: 0 0 20px rgba(255, 0, 60, 0.1);
+}
+
+.diagnostics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.diagnostics-header h4 {
+    color: var(--text-main);
+    letter-spacing: 1px;
+    font-size: 1rem;
+}
+
+.test-results {
+    font-size: 0.9rem;
+}
+
+.health-overview {
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 0.8rem;
+    transition: background 0.3s;
+}
+
+.status-badge.pass { background: rgba(0, 255, 136, 0.2); color: var(--status-low); }
+.status-badge.fail { background: rgba(255, 0, 60, 0.2); color: var(--status-high); }
+.status-badge.running { background: rgba(255, 184, 0, 0.2); color: var(--status-med); animation: blink 1s infinite; }
+
+.test-log {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 1rem;
+}
+
+.test-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    animation: slideIn 0.3s ease-out;
+}
+
+.test-item.pass { border-left: 3px solid var(--status-low); }
+.test-item.fail { border-left: 3px solid var(--status-high); }
+
 /* Responsive */
 @media (max-width: 1024px) {
     .container {

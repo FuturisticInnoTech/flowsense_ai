@@ -9,29 +9,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="global-alert-banner" class="alert-banner hidden">
-        <span class="alert-icon">⚠️</span>
+    <div id="global-alert-banner" class="alert-banner hidden" role="alert" aria-live="assertive">
+        <span class="alert-icon" aria-hidden="true">⚠️</span>
         <span id="global-alert-text">System Alert</span>
     </div>
 
-    <header class="navbar glass-panel">
+    <header class="navbar glass-panel" role="banner">
         <div class="logo">
             <h1>FlowSense <span>AI</span></h1>
         </div>
-        <div class="simulation-controls">
-            <span class="sim-label">Simulations:</span>
-            <button class="sim-btn" id="sim-rush">Match Ending</button>
-            <button class="sim-btn" id="sim-rain">Rain Delay</button>
-            <button class="sim-btn" id="sim-entry">Entry Spike</button>
-            <button class="sim-btn outline" id="sim-reset">Reset Data</button>
+        <div class="simulation-controls" role="group" aria-labelledby="sim-label">
+            <span class="sim-label" id="sim-label">Simulations:</span>
+            <button class="sim-btn" id="sim-rush" aria-label="Simulate Match Ending">Match Ending</button>
+            <button class="sim-btn" id="sim-rain" aria-label="Simulate Rain Delay">Rain Delay</button>
+            <button class="sim-btn" id="sim-entry" aria-label="Simulate Entry Spike">Entry Spike</button>
+            <button class="sim-btn outline" id="sim-reset" aria-label="Reset Data Simulation">Reset Data</button>
         </div>
     </header>
 
-    <main class="container">
+    <main class="container" role="main">
         <!-- Dashboard Section -->
-        <section class="dashboard">
+        <section class="dashboard" aria-labelledby="dashboard-heading">
             <header class="section-header">
-                <h2>Live Heatmap Grid <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted); margin-left: 10px;">(Click zone for details)</span></h2>
+                <h2 id="dashboard-heading">Live Heatmap Grid <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted); margin-left: 10px;">(Click zone for details)</span></h2>
                 <div class="legend" id="heatmap-legend">
                     <span class="dot low"></span> Optimal
                     <span class="dot medium"></span> Moderate
@@ -39,21 +39,21 @@
                 </div>
             </header>
             
-            <div class="virtual-map-wrapper">
+            <div class="virtual-map-wrapper" role="region" aria-label="Virtual Map">
                 <div class="virtual-map-container" id="virtual-map">
                     <!-- Map nodes and user beacon injected here -->
                 </div>
             </div>
 
-            <div class="zones-grid" id="zones-container">
+            <div class="zones-grid" id="zones-container" role="region" aria-label="Venue Zones">
                 <!-- Zones rendered here -->
             </div>
         </section>
 
         <!-- AI Command Panel -->
-        <aside class="ai-panel glass-panel" style="display: flex; flex-direction: column;">
+        <aside class="ai-panel glass-panel" style="display: flex; flex-direction: column;" aria-labelledby="ai-panel-heading">
             <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; height: 100%; border: none; padding: 0;">
-                <h3 style="margin-bottom: 1.5rem; letter-spacing: 2px; color: var(--accent-blue);">SYSTEM INSIGHTS</h3>
+                <h3 id="ai-panel-heading" style="margin-bottom: 1.5rem; letter-spacing: 2px; color: var(--accent-blue);">SYSTEM INSIGHTS</h3>
                 <div id="ai-recommendation-content" class="recommendation-content" style="flex: 1; overflow-y: auto;">
                     Loading insights...
                 </div>
@@ -63,36 +63,36 @@
 
     <!-- FlowSense AI Bot Widget -->
     <div class="floating-controls">
-        <button id="btn-optimize" class="floating-optimize-btn">✨ Optimize Move</button>
-        <button class="chat-fab" id="chat-fab">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <button id="btn-optimize" class="floating-optimize-btn" aria-label="Optimize Move">✨ Optimize Move</button>
+        <button class="chat-fab" id="chat-fab" aria-label="Open Chat Assistant">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         </button>
     </div>
     
-    <div class="chat-widget-container hidden" id="chat-widget">
+    <div class="chat-widget-container hidden" id="chat-widget" role="dialog" aria-label="AI Chat Assistant">
         <div class="chat-widget-header">
             <h3>FlowSense AI Bot</h3>
-            <button id="close-chat-btn">&times;</button>
+            <button id="close-chat-btn" aria-label="Close Chat">&times;</button>
         </div>
-        <div class="chat-window" id="chat-window">
+        <div class="chat-window" id="chat-window" aria-live="polite">
             <div class="message ai">FlowSense AI active. How can I assist you?</div>
         </div>
         <div class="chat-input-container">
-            <input type="text" id="chat-input" placeholder="Ask for directions or info..." autocomplete="off">
-            <button id="send-btn">
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <input type="text" id="chat-input" placeholder="Ask for directions or info..." autocomplete="off" aria-label="Chat input message">
+            <button id="send-btn" aria-label="Send message">
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
         </div>
     </div>
 
     <!-- Zone Details Modal -->
-    <div id="zone-modal-overlay" class="modal-overlay hidden">
+    <div id="zone-modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-content glass-panel" id="modal-content">
-            <button class="close-btn" id="close-modal-btn">&times;</button>
+            <button class="close-btn" id="close-modal-btn" aria-label="Close Zone Details">&times;</button>
             <div class="modal-header">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem; flex-wrap:wrap; gap:1rem;">
                     <h2 id="modal-title" style="margin:0">Zone Name</h2>
-                    <button id="set-location-btn" class="set-location-btn">📍 Set As My Location</button>
+                    <button id="set-location-btn" class="set-location-btn" aria-label="Set as my location">📍 Set As My Location</button>
                 </div>
                 <div id="modal-badges" class="zone-badges"></div>
             </div>
@@ -119,6 +119,25 @@
         </div>
     </div>
 
+    <footer style="text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.8rem; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05);" role="contentinfo">
+        <p>FlowSense AI &copy; 2026</p>
+    </footer>
+
+    <!-- System Diagnostics Panel -->
+    <div id="system-diagnostics-panel" class="diagnostics-panel glass-panel" role="region" aria-label="System Diagnostics">
+        <div class="diagnostics-header">
+            <h4>System Diagnostics</h4>
+            <button id="run-tests-btn" class="sim-btn" aria-label="Run System Diagnostics">Run Tests</button>
+        </div>
+        <div id="test-results" class="test-results" aria-live="polite">
+            <div class="health-overview">
+                System Health: <span id="health-status" class="status-badge">Standing By</span>
+            </div>
+            <ul id="test-log" class="test-log hidden"></ul>
+        </div>
+    </div>
+
     <script src="script.js"></script>
+    <script src="test.js"></script>
 </body>
 </html>
