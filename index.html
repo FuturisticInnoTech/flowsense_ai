@@ -51,11 +51,25 @@
         </section>
 
         <!-- AI Command Panel -->
-        <aside class="ai-panel glass-panel" style="display: flex; flex-direction: column;" aria-labelledby="ai-panel-heading">
-            <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; height: 100%; border: none; padding: 0;">
-                <h3 id="ai-panel-heading" style="margin-bottom: 1.5rem; letter-spacing: 2px; color: var(--accent-blue);">SYSTEM INSIGHTS</h3>
-                <div id="ai-recommendation-content" class="recommendation-content" style="flex: 1; overflow-y: auto;">
+        <aside class="ai-panel glass-panel" aria-labelledby="ai-panel-heading">
+            <div class="panel-section ai-insights-section">
+                <h3 id="ai-panel-heading">SYSTEM INSIGHTS</h3>
+                <div id="ai-recommendation-content" class="recommendation-content">
                     Loading insights...
+                </div>
+            </div>
+
+            <!-- System Diagnostics Panel -->
+            <div id="system-diagnostics-panel" class="diagnostics-panel" role="region" aria-label="System Diagnostics">
+                <div class="diagnostics-header">
+                    <h4>System Diagnostics</h4>
+                    <button id="run-tests-btn" class="sim-btn" aria-label="Run System Diagnostics">Run Tests</button>
+                </div>
+                <div id="test-results" class="test-results" aria-live="polite">
+                    <div class="health-overview">
+                        System Health: <span id="health-status" class="status-badge">Standing By</span>
+                    </div>
+                    <ul id="test-log" class="test-log hidden"></ul>
                 </div>
             </div>
         </aside>
@@ -123,21 +137,73 @@
         <p>FlowSense AI &copy; 2026</p>
     </footer>
 
-    <!-- System Diagnostics Panel -->
-    <div id="system-diagnostics-panel" class="diagnostics-panel glass-panel" role="region" aria-label="System Diagnostics">
-        <div class="diagnostics-header">
-            <h4>System Diagnostics</h4>
-            <button id="run-tests-btn" class="sim-btn" aria-label="Run System Diagnostics">Run Tests</button>
-        </div>
-        <div id="test-results" class="test-results" aria-live="polite">
-            <div class="health-overview">
-                System Health: <span id="health-status" class="status-badge">Standing By</span>
-            </div>
-            <ul id="test-log" class="test-log hidden"></ul>
-        </div>
-    </div>
-
     <script src="script.js"></script>
     <script src="test.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRq3XCTzC8OhIL8LvVLPJs2Ru2hwE8LsU",
+            authDomain: "jainmapofficial.firebaseapp.com",
+            databaseURL: "https://jainmapofficial-default-rtdb.firebaseio.com",
+            projectId: "jainmapofficial",
+            storageBucket: "jainmapofficial.firebasestorage.app",
+            messagingSenderId: "124868376861",
+            appId: "1:124868376861:web:96c5a7ee22c90523ab49f4",
+            measurementId: "G-7EMXM55KME"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        const FIREBASE_MAX_INPUT_LENGTH = 100;
+        const ALLOWED_CHAT_SENDERS = new Set(["user", "ai"]);
+
+        const sanitizeForFirestore = (value) => {
+            if (typeof value !== "string") {
+                return "";
+            }
+
+            return value
+                .replace(/[<>]/g, "")
+                .replace(/script/gi, "")
+                .replace(/javascript:/gi, "")
+                .trim()
+                .slice(0, FIREBASE_MAX_INPUT_LENGTH);
+        };
+
+        const isValidFirestoreValue = (value) => {
+            return typeof value === "string" && value.trim().length > 0 && value.length <= FIREBASE_MAX_INPUT_LENGTH;
+        };
+
+        window.logChatMessage = async (sender, message) => {
+            try {
+                const safeSender = sanitizeForFirestore(sender);
+                const safeMessage = sanitizeForFirestore(message);
+
+                if (!ALLOWED_CHAT_SENDERS.has(safeSender)) {
+                    return;
+                }
+
+                if (!isValidFirestoreValue(safeSender) || !isValidFirestoreValue(safeMessage)) {
+                    return;
+                }
+
+                await addDoc(collection(db, "chat_logs"), {
+                    sender: safeSender,
+                    message: safeMessage,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.error("Error logging message to Firestore:", e);
+            }
+        };
+    </script>
 </body>
 </html>

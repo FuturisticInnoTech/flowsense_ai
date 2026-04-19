@@ -3,6 +3,8 @@
  * Runs diagnostics on core prediction and recommendation logic.
  */
 
+const TEST_STEP_DELAY_MS = 200;
+
 class SystemDiagnostics {
     constructor() {
         this.tests = [];
@@ -35,9 +37,9 @@ class SystemDiagnostics {
         
         if (!logEl || !healthEl || !panelEl) return;
 
-        logEl.innerHTML = '';
+        logEl.textContent = '';
         logEl.classList.remove('hidden');
-        healthEl.innerText = 'Running...';
+        healthEl.textContent = 'Running...';
         healthEl.className = 'status-badge running';
         panelEl.classList.remove('all-passed', 'has-failures');
 
@@ -48,27 +50,42 @@ class SystemDiagnostics {
                 t.fn();
                 this.passed++;
                 li.classList.add('pass');
-                li.innerHTML = `<span>${t.name}</span> <span>✅ PASS</span>`;
+                li.appendChild(this._createResultLabel(t.name, '✅ PASS'));
             } catch (err) {
                 this.failed++;
                 li.classList.add('fail');
-                li.innerHTML = `<span>${t.name}</span> <span>❌ FAIL: ${err.message}</span>`;
+                li.appendChild(this._createResultLabel(t.name, `❌ FAIL: ${err.message}`));
             }
             logEl.appendChild(li);
             
             // Add a small delay for subtle animation effect
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, TEST_STEP_DELAY_MS));
         }
 
         if (this.failed === 0) {
-            healthEl.innerText = 'Optimal (All Tests Passed)';
+            healthEl.textContent = 'Optimal (All Tests Passed)';
             healthEl.className = 'status-badge pass';
             panelEl.classList.add('all-passed');
         } else {
-            healthEl.innerText = `Critical (${this.failed} Failures)`;
+            healthEl.textContent = `Critical (${this.failed} Failures)`;
             healthEl.className = 'status-badge fail';
             panelEl.classList.add('has-failures');
         }
+    }
+
+    _createResultLabel(name, statusText) {
+        const wrapper = document.createElement('div');
+        const nameSpan = document.createElement('span');
+        const statusSpan = document.createElement('span');
+
+        nameSpan.textContent = name;
+        statusSpan.textContent = statusText;
+
+        wrapper.appendChild(nameSpan);
+        wrapper.appendChild(document.createTextNode(' '));
+        wrapper.appendChild(statusSpan);
+
+        return wrapper;
     }
 }
 
@@ -103,7 +120,20 @@ diagnostics.test('predictWaitTime: VIP and Staffing Multipliers', () => {
     diagnostics.assertEquals(wait, 45, 'Wait time should adjust for staff and VIP');
 });
 
-// Test 3: Recommendation Engine Output
+// Test 3: Security Helpers
+diagnostics.test('sanitizeInput: Removes script tokens and brackets', () => {
+    const sanitized = sanitizeInput('  <script>alert(1)</script>  ');
+    diagnostics.assert(!sanitized.includes('<'), 'Should remove <');
+    diagnostics.assert(!sanitized.includes('>'), 'Should remove >');
+    diagnostics.assert(!sanitized.toLowerCase().includes('script'), 'Should strip script token');
+});
+
+diagnostics.test('validateInput: Rejects empty and non-string values', () => {
+    diagnostics.assertEquals(validateInput('   '), false, 'Empty input should fail');
+    diagnostics.assertEquals(validateInput(123), false, 'Non-string input should fail');
+});
+
+// Test 4: Recommendation Engine Output
 diagnostics.test('generateRecommendations: Avoids highly congested zones', () => {
     // Need a minimal list of zones
     const mockZones = [
